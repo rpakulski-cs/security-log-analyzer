@@ -9,11 +9,6 @@ from src.analyzer.models.base import SSHLogEntry, UnparsedLogEntry, LogType
 logger = logging.getLogger(__name__)
 
 class SyslogParser:
-    """
-    Parser Syslog (SSH) zwracający zwalidowane modele Pydantic.
-    """
-
-    # Mmm dd hh:mm:ss hostname process[pid]: message
     SYSLOG_PATTERN = re.compile(
         r'^([A-Z][a-z]{2}\s+\d+\s\d{2}:\d{2}:\d{2})\s+'
         r'(\S+)\s+'                                      
@@ -21,7 +16,6 @@ class SyslogParser:
         r'(.*)$'                                         
     )
 
-    # Regexy pomocnicze
     IP_PATTERN = re.compile(r'from\s+(\d{1,3}(?:\.\d{1,3}){3})')
     PORT_PATTERN = re.compile(r'port\s+(\d+)')
     USER_PATTERN = re.compile(r'(?:user|for)\s+(\S+)')
@@ -30,9 +24,6 @@ class SyslogParser:
         self.default_year = year
 
     def parse(self, lines: Iterable[str]) -> Iterator[SSHLogEntry | UnparsedLogEntry]:
-        """
-        Generator przetwarzający linie na obiekty SSHLogEntry.
-        """
         for line_number, line in enumerate(lines, 1):
             line = line.strip()
             if not line:
@@ -47,15 +38,11 @@ class SyslogParser:
             raw_ts, hostname, process, pid_str, message = match.groups()
 
             try:
-                # 1. Parsowanie czasu
                 timestamp = self._parse_timestamp(raw_ts)
-
-                # 2. Wyciąganie detali z message (IP, Port, User)
                 ip_address = self._extract_ip(message)
                 port = self._extract_port(message)
                 user = self._extract_user(message)
 
-                # 3. Tworzenie modelu Pydantic
                 entry = SSHLogEntry(
                     timestamp=timestamp,
                     raw_content=line,
@@ -63,7 +50,7 @@ class SyslogParser:
                     process_name=process,
                     pid=int(pid_str) if pid_str else None,
                     message=message,
-                    source_ip=ip_address, # Może być None
+                    source_ip=ip_address, 
                     user=user,
                     port=port,
                     line_number=line_number

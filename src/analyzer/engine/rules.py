@@ -85,14 +85,10 @@ class BruteForceRule(Rule):
         return None
 
 class KeywordAlertRule(Rule):
-    """
-    Scans UnparsedLogEntry for critical keywords like 'restart', 'shutdown', etc.
-    """
     name = "Critical System Event"
     KEYWORDS = ["restart", "shutdown", "panic", "error", "malformed"]
 
     def check(self, entry: BaseLogEntry) -> Optional[Alert]:
-        # We only care about Unparsed entries here
         if not isinstance(entry, UnparsedLogEntry):
             return None
 

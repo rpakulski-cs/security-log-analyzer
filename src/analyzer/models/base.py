@@ -24,11 +24,8 @@ class BaseLogEntry(BaseModel):
         return self.timestamp < other.timestamp
 
 class UnparsedLogEntry(BaseLogEntry):
-    """Model for lines that failed regex parsing."""
     log_type: LogType = LogType.UNPARSED
     reason: str = "Regex mismatch or validation error"
-
-# --- Existing specific models updated with line_number ---
 
 class WebLogEntry(BaseLogEntry):
     log_type: LogType = LogType.WEB
@@ -48,5 +45,4 @@ class SSHLogEntry(BaseLogEntry):
     user: Optional[str] = None
     port: Optional[int] = None
 
-# Type alias for easier type hinting
 LogEntry = Union[WebLogEntry, SSHLogEntry, UnparsedLogEntry]
