@@ -50,7 +50,6 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # 1. Walidacja plików wejściowych
     valid_files = [f for f in args.files if f.exists()]
     if not valid_files:
         logger.error("No valid input files provided.")
@@ -59,8 +58,7 @@ def main():
     if len(valid_files) < len(args.files):
         logger.warning(f"Some files were not found and will be skipped.")
 
-    # 2. Inicjalizacja komponentów
-    # Tutaj w przyszłości można dodać ładowanie reguł z pliku rules.json
+    # TODO: chanege to be loaded from rules.json
     rules = [
         SQLInjectionRule(),
         BruteForceRule(max_attempts=3, window_seconds=60),
@@ -70,27 +68,18 @@ def main():
     streamer = LogStreamer()
     detector = ThreatDetector(rules)
     
-    # Wybór writera
     writer = JsonWriter() if args.format == "json" else ConsoleWriter()
 
-    # 3. Uruchomienie Pipeline
     try:
-        # Scalanie logów
         log_stream = streamer.stream_merged_logs(valid_files)
-        
-        # Analiza (detekcja)
         alert_stream = detector.analyze_stream(log_stream)
         
-        # Raportowanie
         if args.output:
-            # Zapis do pliku
-            logger.info(f"Writing report to {args.output}...")
-            # create parent dirs if needed
+            logger.info(f"Writing report to {args.output} file.")
             args.output.parent.mkdir(parents=True, exist_ok=True)
             with open(args.output, "w", encoding="utf-8") as f:
                 writer.write(alert_stream, destination=f)
         else:
-            # Wypisanie na ekran
             writer.write(alert_stream, destination=sys.stdout)
 
     except KeyboardInterrupt:
