@@ -4,7 +4,7 @@ from typing import Iterator, Iterable, Optional
 from datetime import datetime, timezone
 from pydantic import ValidationError
 
-from src.analyzer.models.base import SSHLogEntry, LogType
+from src.analyzer.models.base import SSHLogEntry, UnparsedLogEntry, LogType
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class SyslogParser:
     def __init__(self, year: int = datetime.now().year):
         self.default_year = year
 
-    def parse(self, lines: Iterable[str]) -> Iterator[SSHLogEntry]:
+    def parse(self, lines: Iterable[str]) -> Iterator[SSHLogEntry | UnparsedLogEntry]:
         """
         Generator przetwarzający linie na obiekty SSHLogEntry.
         """
@@ -42,7 +42,7 @@ class SyslogParser:
             
             if not match:
                 logger.warning(f"Line {line_number}: Regex mismatch (Syslog). Content: '{line[:30]}...'")
-                continue
+                yield self._handle_unparsed(line, line_number, str(e))
 
             raw_ts, hostname, process, pid_str, message = match.groups()
 
@@ -65,13 +65,14 @@ class SyslogParser:
                     message=message,
                     source_ip=ip_address, # Może być None
                     user=user,
-                    port=port
+                    port=port,
+                    line_number=line_number
                 )
                 yield entry
 
             except (ValueError, ValidationError) as e:
-                logger.warning(f"Line {line_number}: Validation error: {e}")
-                continue
+                logger.warning(f"Line {line_number}: Validation error: {e}. Content: '{line[:50]}...'")
+                yield self._handle_unparsed(line, line_number, str(e))
 
     def _parse_timestamp(self, raw_ts: str) -> datetime:
         dt_str = f"{raw_ts} {self.default_year}"
@@ -96,3 +97,12 @@ class SyslogParser:
         if match and match.group(1) != "invalid":
             return match.group(1)
         return None
+    
+    def _handle_unparsed(self, line: str, line_num: int, reason: str) -> UnparsedLogEntry:
+        return UnparsedLogEntry(
+            timestamp=self.last_valid_timestamp or datetime.now(timezone.utc),
+            is_timestamp_estimated=True if self.last_valid_timestamp else False,
+            raw_content=line,
+            line_number=line_num,
+            reason=reason
+        )

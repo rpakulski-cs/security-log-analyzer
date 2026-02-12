@@ -9,7 +9,7 @@ sys.path.append(".")
 
 from src.analyzer.engine.streamer import LogStreamer
 from src.analyzer.engine.detector import ThreatDetector
-from src.analyzer.engine.rules import SQLInjectionRule, BruteForceRule
+from src.analyzer.engine.rules import SQLInjectionRule, BruteForceRule, KeywordAlertRule
 from src.analyzer.output.writer import ConsoleWriter, JsonWriter
 
 # Konfiguracja logowania (błędy parsera itp.)
@@ -63,7 +63,8 @@ def main():
     # Tutaj w przyszłości można dodać ładowanie reguł z pliku rules.json
     rules = [
         SQLInjectionRule(),
-        BruteForceRule(max_attempts=3, window_seconds=60)
+        BruteForceRule(max_attempts=3, window_seconds=60),
+        KeywordAlertRule()
     ]
     
     streamer = LogStreamer()

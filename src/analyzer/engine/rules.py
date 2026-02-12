@@ -4,7 +4,7 @@ from collections import defaultdict, deque
 from datetime import timedelta
 from typing import Optional
 
-from src.analyzer.models.base import BaseLogEntry, WebLogEntry, SSHLogEntry
+from src.analyzer.models.base import BaseLogEntry, WebLogEntry, SSHLogEntry, UnparsedLogEntry
 from src.analyzer.models.alert import Alert, Severity
 
 class Rule(ABC):
@@ -82,4 +82,32 @@ class BruteForceRule(Rule):
                 raw_log=entry.raw_content
             )
             
+        return None
+
+class KeywordAlertRule(Rule):
+    """
+    Scans UnparsedLogEntry for critical keywords like 'restart', 'shutdown', etc.
+    """
+    name = "Critical System Event"
+    KEYWORDS = ["restart", "shutdown", "panic", "error", "malformed"]
+
+    def check(self, entry: BaseLogEntry) -> Optional[Alert]:
+        # We only care about Unparsed entries here
+        if not isinstance(entry, UnparsedLogEntry):
+            return None
+
+        content_lower = entry.raw_content.lower()
+        if any(keyword in content_lower for keyword in self.KEYWORDS):
+            description = "Critical system event detected"
+            if entry.is_timestamp_estimated:
+                description += " (timestamp approximate)"
+
+            return Alert(
+                timestamp=entry.timestamp,
+                rule_name=self.name,
+                severity=Severity.CRITICAL,
+                description=f"{description}: '{entry.raw_content}'",
+                source_ip="Local System",
+                raw_log=entry.raw_content
+            )
         return None
