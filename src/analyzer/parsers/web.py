@@ -52,4 +52,4 @@ class WebLogParser(BaseParser):
 
             except (ValueError, ValidationError) as e:
                 logger.warning(f"Line {line_number}: Validation error: {e}")
-                yield self._handle_unparsed(line, line_number, str(e))
+                yield self._handle_unparsed(line, line_number, f"Validation error: {e}")
