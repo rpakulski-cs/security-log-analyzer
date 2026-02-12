@@ -22,7 +22,6 @@ def test_handle_unparsed_no_state():
     assert result.timestamp.replace(tzinfo=timezone.utc).date() == datetime.now(timezone.utc).date()
 
 def test_handle_unparsed_with_state():
-    """Testuje zachowanie, gdy parser pamięta ostatni poprawny timestamp."""
     parser = ConcreteParser()
     
     fixed_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
