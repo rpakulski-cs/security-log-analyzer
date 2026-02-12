@@ -1,19 +1,20 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional, Any
-import ipaddress
-
-from pydantic import BaseModel, Field, IPvAnyAddress, field_validator, ConfigDict
+from typing import Optional, Any, Union
+from pydantic import BaseModel, Field, ConfigDict, IPvAnyAddress
 
 class LogType(str, Enum):
     SSH = "ssh"
     WEB = "web"
+    UNPARSED = "unparsed"
     GENERIC = "generic"
 
 class BaseLogEntry(BaseModel):
     timestamp: datetime
     log_type: LogType
-    raw_content: str = Field(repr=False) 
+    raw_content: str = Field(repr=False)
+    is_timestamp_estimated: bool = False
+    line_number: Optional[int] = None
     
     model_config = ConfigDict(frozen=True, extra='ignore')
 
@@ -22,30 +23,26 @@ class BaseLogEntry(BaseModel):
             return NotImplemented
         return self.timestamp < other.timestamp
 
+class UnparsedLogEntry(BaseLogEntry):
+    log_type: LogType = LogType.UNPARSED
+    reason: str = "Regex mismatch or validation error"
+
 class WebLogEntry(BaseLogEntry):
     log_type: LogType = LogType.WEB
-    
     source_ip: IPvAnyAddress
     http_method: str
     request_path: str
     status_code: int
     response_size_bytes: int
 
-    @field_validator('status_code')
-    @classmethod
-    def validate_status(cls, v: int) -> int:
-        if not (100 <= v <= 599):
-            raise ValueError(f"Invalid HTTP status code: {v}")
-        return v
-
 class SSHLogEntry(BaseLogEntry):
     log_type: LogType = LogType.SSH
-    
     hostname: str
     process_name: str
     pid: Optional[int] = None
     message: str
-    
     source_ip: Optional[IPvAnyAddress] = None
     user: Optional[str] = None
     port: Optional[int] = None
+
+LogEntry = Union[WebLogEntry, SSHLogEntry, UnparsedLogEntry]

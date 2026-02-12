@@ -10,9 +10,6 @@ class Severity(str, Enum):
     CRITICAL = "CRITICAL"
 
 class Alert(BaseModel):
-    """
-    Represents a detected security threat.
-    """
     timestamp: datetime
     rule_name: str
     severity: Severity

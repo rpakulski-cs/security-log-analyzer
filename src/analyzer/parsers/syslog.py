@@ -4,35 +4,28 @@ from typing import Iterator, Iterable, Optional
 from datetime import datetime, timezone
 from pydantic import ValidationError
 
-from src.analyzer.models.base import SSHLogEntry, LogType
+from src.analyzer.parsers.base import BaseParser
+from src.analyzer.models.base import SSHLogEntry, UnparsedLogEntry
 
 logger = logging.getLogger(__name__)
 
-class SyslogParser:
-    """
-    Parser Syslog (SSH) zwracający zwalidowane modele Pydantic.
-    """
-
-    # Mmm dd hh:mm:ss hostname process[pid]: message
+class SyslogParser(BaseParser):
     SYSLOG_PATTERN = re.compile(
         r'^([A-Z][a-z]{2}\s+\d+\s\d{2}:\d{2}:\d{2})\s+'
-        r'(\S+)\s+'                                      
-        r'([a-zA-Z0-9_\-\.]+)(?:\[(\d+)\])?:\s+'         
-        r'(.*)$'                                         
+        r'(\S+)\s+'
+        r'([a-zA-Z0-9_\-\.]+)(?:\[(\d+)\])?:\s+'
+        r'(.*)$'
     )
 
-    # Regexy pomocnicze
     IP_PATTERN = re.compile(r'from\s+(\d{1,3}(?:\.\d{1,3}){3})')
     PORT_PATTERN = re.compile(r'port\s+(\d+)')
     USER_PATTERN = re.compile(r'(?:user|for)\s+(\S+)')
 
     def __init__(self, year: int = datetime.now().year):
+        super().__init__()
         self.default_year = year
 
-    def parse(self, lines: Iterable[str]) -> Iterator[SSHLogEntry]:
-        """
-        Generator przetwarzający linie na obiekty SSHLogEntry.
-        """
+    def parse(self, lines: Iterable[str]) -> Iterator[SSHLogEntry | UnparsedLogEntry]:
         for line_number, line in enumerate(lines, 1):
             line = line.strip()
             if not line:
@@ -41,37 +34,36 @@ class SyslogParser:
             match = self.SYSLOG_PATTERN.match(line)
             
             if not match:
-                logger.warning(f"Line {line_number}: Regex mismatch (Syslog). Content: '{line[:30]}...'")
+                logger.warning(f"Line {line_number}: Regex mismatch (Syslog).")
+                yield self._handle_unparsed(line, line_number, "Regex mismatch")
                 continue
 
             raw_ts, hostname, process, pid_str, message = match.groups()
 
             try:
-                # 1. Parsowanie czasu
                 timestamp = self._parse_timestamp(raw_ts)
-
-                # 2. Wyciąganie detali z message (IP, Port, User)
+                self.last_valid_timestamp = timestamp
+                
                 ip_address = self._extract_ip(message)
                 port = self._extract_port(message)
                 user = self._extract_user(message)
 
-                # 3. Tworzenie modelu Pydantic
-                entry = SSHLogEntry(
+                yield SSHLogEntry(
                     timestamp=timestamp,
                     raw_content=line,
                     hostname=hostname,
                     process_name=process,
                     pid=int(pid_str) if pid_str else None,
                     message=message,
-                    source_ip=ip_address, # Może być None
+                    source_ip=ip_address, 
                     user=user,
-                    port=port
+                    port=port,
+                    line_number=line_number
                 )
-                yield entry
 
             except (ValueError, ValidationError) as e:
                 logger.warning(f"Line {line_number}: Validation error: {e}")
-                continue
+                yield self._handle_unparsed(line, line_number, str(e))
 
     def _parse_timestamp(self, raw_ts: str) -> datetime:
         dt_str = f"{raw_ts} {self.default_year}"
