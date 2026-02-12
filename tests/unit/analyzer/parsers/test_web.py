@@ -53,6 +53,15 @@ def test_parse_stateful_fallback(parser):
     assert malformed_entry.timestamp == valid_entry.timestamp 
     assert "system restart" in malformed_entry.raw_content
 
+def test_parse_invalid_date_format(parser):
+    line = '127.0.0.1 - - [BadDate:10:00:00] "GET / HTTP/1.1" 200 123'
+    
+    results = list(parser.parse([line]))
+    
+    assert len(results) == 1
+    assert isinstance(results[0], UnparsedLogEntry)
+    assert "Validation error" in results[0].reason
+
 def test_parse_invalid_ip_validation(parser):
     line = '999.999.999.999 - - [03/Jul/2025:10:00:00 +0000] "GET / HTTP/1.1" 200 0'
     
@@ -61,3 +70,15 @@ def test_parse_invalid_ip_validation(parser):
     assert len(results) == 1
     assert isinstance(results[0], UnparsedLogEntry)
     assert "Validation error" in results[0].reason
+
+def test_parse_timestamp_inheritance_web(parser):
+    lines = [
+        '192.168.1.1 - - [03/Jul/2025:10:00:00 +0000] "GET / HTTP/1.1" 200 100', # Valid log to set timestamp
+        'Garbage Data' 
+    ]
+    
+    results = list(parser.parse(lines))
+    
+    assert len(results) == 2
+    assert results[0].timestamp == results[1].timestamp
+    assert results[1].is_timestamp_estimated is True

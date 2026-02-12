@@ -51,3 +51,18 @@ def test_parse_malformed_syslog(parser):
     
     assert isinstance(results[0], UnparsedLogEntry)
     assert results[0].reason == "Regex mismatch"
+
+def test_parse_timestamp_inheritance_syslog(parser):
+    lines = [
+        "Jul  3 10:00:00 server sshd[1]: Valid log",    # Valid -> to set timestamp
+        "Garbage Data "                       
+    ]
+    
+    results = list(parser.parse(lines))
+    assert len(results) == 2
+    
+    valid_entry = results[0]
+    error_entry = results[1]
+    
+    assert error_entry.timestamp == valid_entry.timestamp
+    assert error_entry.is_timestamp_estimated is True
