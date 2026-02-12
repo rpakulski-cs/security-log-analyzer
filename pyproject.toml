@@ -1,0 +1,14 @@
+[project]
+name = "security_log_analyzer"
+version = "0.1.0"
+description = "Analyzes web services logs and pointing illegal actions."
+requires-python = ">=3.13.3"
+
+dependencies = [
+    "pydantic"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest"
+]
