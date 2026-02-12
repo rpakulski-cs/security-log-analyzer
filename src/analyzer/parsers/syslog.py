@@ -4,16 +4,17 @@ from typing import Iterator, Iterable, Optional
 from datetime import datetime, timezone
 from pydantic import ValidationError
 
-from src.analyzer.models.base import SSHLogEntry, UnparsedLogEntry, LogType
+from src.analyzer.parsers.base import BaseParser
+from src.analyzer.models.base import SSHLogEntry, UnparsedLogEntry
 
 logger = logging.getLogger(__name__)
 
-class SyslogParser:
+class SyslogParser(BaseParser):
     SYSLOG_PATTERN = re.compile(
         r'^([A-Z][a-z]{2}\s+\d+\s\d{2}:\d{2}:\d{2})\s+'
-        r'(\S+)\s+'                                      
-        r'([a-zA-Z0-9_\-\.]+)(?:\[(\d+)\])?:\s+'         
-        r'(.*)$'                                         
+        r'(\S+)\s+'
+        r'([a-zA-Z0-9_\-\.]+)(?:\[(\d+)\])?:\s+'
+        r'(.*)$'
     )
 
     IP_PATTERN = re.compile(r'from\s+(\d{1,3}(?:\.\d{1,3}){3})')
@@ -21,6 +22,7 @@ class SyslogParser:
     USER_PATTERN = re.compile(r'(?:user|for)\s+(\S+)')
 
     def __init__(self, year: int = datetime.now().year):
+        super().__init__()
         self.default_year = year
 
     def parse(self, lines: Iterable[str]) -> Iterator[SSHLogEntry | UnparsedLogEntry]:
@@ -32,18 +34,21 @@ class SyslogParser:
             match = self.SYSLOG_PATTERN.match(line)
             
             if not match:
-                logger.warning(f"Line {line_number}: Regex mismatch (Syslog). Content: '{line[:30]}...'")
-                yield self._handle_unparsed(line, line_number, str(e))
+                logger.warning(f"Line {line_number}: Regex mismatch (Syslog).")
+                yield self._handle_unparsed(line, line_number, "Regex mismatch")
+                continue
 
             raw_ts, hostname, process, pid_str, message = match.groups()
 
             try:
                 timestamp = self._parse_timestamp(raw_ts)
+                self.last_valid_timestamp = timestamp
+                
                 ip_address = self._extract_ip(message)
                 port = self._extract_port(message)
                 user = self._extract_user(message)
 
-                entry = SSHLogEntry(
+                yield SSHLogEntry(
                     timestamp=timestamp,
                     raw_content=line,
                     hostname=hostname,
@@ -55,10 +60,9 @@ class SyslogParser:
                     port=port,
                     line_number=line_number
                 )
-                yield entry
 
             except (ValueError, ValidationError) as e:
-                logger.warning(f"Line {line_number}: Validation error: {e}. Content: '{line[:50]}...'")
+                logger.warning(f"Line {line_number}: Validation error: {e}")
                 yield self._handle_unparsed(line, line_number, str(e))
 
     def _parse_timestamp(self, raw_ts: str) -> datetime:
@@ -84,12 +88,3 @@ class SyslogParser:
         if match and match.group(1) != "invalid":
             return match.group(1)
         return None
-    
-    def _handle_unparsed(self, line: str, line_num: int, reason: str) -> UnparsedLogEntry:
-        return UnparsedLogEntry(
-            timestamp=self.last_valid_timestamp or datetime.now(timezone.utc),
-            is_timestamp_estimated=True if self.last_valid_timestamp else False,
-            raw_content=line,
-            line_number=line_num,
-            reason=reason
-        )
