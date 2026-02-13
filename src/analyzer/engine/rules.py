@@ -32,9 +32,11 @@ class SQLInjectionRule(Rule):
         if not isinstance(entry, WebLogEntry):
             return None
 
-        if entry.request_path:
+        text_to_check = entry.raw_content or entry.request_path
+        
+        if text_to_check:
             for pattern in self.PATTERNS:
-                if pattern.search(entry.request_path):
+                if pattern.search(text_to_check):
                     return Alert(
                         timestamp=entry.timestamp,
                         rule_name=self.name,
@@ -94,9 +96,7 @@ class KeywordAlertRule(Rule):
 
         content_lower = entry.raw_content.lower()
         if any(keyword in content_lower for keyword in self.KEYWORDS):
-            description = "Critical system event detected"
-            if entry.is_timestamp_estimated:
-                description += " (timestamp approximate)"
+            description = "Critical system event detected (timestamp approximate)"
 
             return Alert(
                 timestamp=entry.timestamp,

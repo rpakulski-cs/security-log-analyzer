@@ -25,7 +25,7 @@ class BaseLogEntry(BaseModel):
 
 class UnparsedLogEntry(BaseLogEntry):
     log_type: LogType = LogType.UNPARSED
-    reason: str = "Regex mismatch or validation error"
+    reason: str = "Regex mismatch or validation error."
 
 class WebLogEntry(BaseLogEntry):
     log_type: LogType = LogType.WEB
