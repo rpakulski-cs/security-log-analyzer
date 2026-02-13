@@ -11,29 +11,37 @@ A Python CLI tool for analyzing security logs (Web Access & SSH/Auth). It detect
 ### Running the Analyzer
 
 **Analyze files and display a text report (Default):**
+
 python3 src/analyzer/main.py tests/test_data/webserver.log tests/test_data/auth.log
 
 **Save the report to a JSON file:**
+
 python3 src/analyzer/main.py tests/test_data/webserver.log -f json -o security_report.json
 
 ## Runing Tests
 The project has full test coverage (Unit, Integration, E2E).
 
 **Run all tests:**
+
 pytest
 
-**Run specific test categories:**
-### Unit Tests (Fast, isolated logic)
-pytest tests/analyzer/
+### Run specific test categories:
 
-### Integration Tests (Pipeline flow)
+**Unit Tests (Fast, isolated logic)**
+
+pytest tests/unit/
+
+**Integration Tests (Pipeline flow)**
+
 pytest tests/integration/
 
-### End-to-End Tests (Full user scenarios)
+**End-to-End Tests (Full user scenarios)**
+
 pytest tests/e2e/
 
-**Generate coverage report (requires pytest-cov):**
+**Generate coverage report (requires additionally pytest-cov):**
 
+pytest --cov=src
 
 # About the Project
 
