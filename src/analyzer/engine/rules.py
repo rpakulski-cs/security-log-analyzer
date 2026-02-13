@@ -25,7 +25,7 @@ class SQLInjectionRule(Rule):
         re.compile(r"OR\s+['\"]?\d+['\"]?\s*=\s*['\"]?\d+", re.IGNORECASE),
         re.compile(r"(\'|%27)\s*--", re.IGNORECASE), 
         re.compile(r";\s*DROP\s+TABLE", re.IGNORECASE), 
-        re.compile(r"\.\./\.\./etc/passwd"), 
+        re.compile(r"\.\./\.\./etc")
     ]
 
     def check(self, entry: BaseLogEntry) -> Optional[Alert]:
