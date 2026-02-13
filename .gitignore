@@ -2,6 +2,7 @@
 __pycache__/
 *debug*
 report.json
+.coverage
 
 # Distribution / packaging
 dist/
