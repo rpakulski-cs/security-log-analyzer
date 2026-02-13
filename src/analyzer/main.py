@@ -12,7 +12,6 @@ from src.analyzer.engine.detector import ThreatDetector
 from src.analyzer.engine.rules import SQLInjectionRule, BruteForceRule, KeywordAlertRule
 from src.analyzer.output.writer import ConsoleWriter, JsonWriter
 
-# Konfiguracja logowania (błędy parsera itp.)
 logging.basicConfig(
     level=logging.WARNING,
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
@@ -58,7 +57,6 @@ def main():
     if len(valid_files) < len(args.files):
         logger.warning(f"Some files were not found and will be skipped.")
 
-    # TODO: chanege to be loaded from rules.json
     rules = [
         SQLInjectionRule(),
         BruteForceRule(max_attempts=3, window_seconds=60),
