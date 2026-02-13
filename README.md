@@ -23,13 +23,13 @@ The project has full test coverage (Unit, Integration, E2E).
 pytest
 
 **Run specific test categories:**
-# Unit Tests (Fast, isolated logic)
+### Unit Tests (Fast, isolated logic)
 pytest tests/analyzer/
 
-# Integration Tests (Pipeline flow)
+### Integration Tests (Pipeline flow)
 pytest tests/integration/
 
-# End-to-End Tests (Full user scenarios)
+### End-to-End Tests (Full user scenarios)
 pytest tests/e2e/
 
 **Generate coverage report (requires pytest-cov):**
