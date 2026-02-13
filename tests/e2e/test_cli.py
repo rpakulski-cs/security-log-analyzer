@@ -65,7 +65,7 @@ def test_default_text_output_stdout_multiple_sources(tmp_path):
 
     assert "SSH Brute Force" in output or "SSH" in output
 
-    assert "DROP\s+TABLE" in output
+    assert "DROP\\s+TABLE" in output
 
     assert "Total threats detected: 7" in output
 
