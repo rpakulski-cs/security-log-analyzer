@@ -6,13 +6,36 @@ A Python CLI tool for analyzing security logs (Web Access & SSH/Auth). It detect
 
 ### Prerequisites
 * Python 3.13.1+
-* Install dependencies: `pip install -e`)
+
+### Setup & Installation
+
+It is recommended to use a virtual environment to manage dependencies. Follow the steps below for your operating system:
+
+#### macOS / Linux
+
+Open terminal and run commands below:
+
+python -m venv .venv
+
+source .venv/bin/activate
+
+pip install -e ".[dev]"
+
+#### Windows
+
+Open PowerShell and run commands below:
+
+python -m venv .venv
+
+.\.venv\Scripts\Activate.ps1
+
+pip install -e ".[dev]"
 
 ### Running the Analyzer
 
 **Analyze files and display a text report (Default):**
 
-python3 src/analyzer/main.py tests/test_data/webserver.log tests/test_data/auth.log
+python src/analyzer/main.py tests/test_data/webserver.log tests/test_data/auth.log
 
 **Save the report to a JSON file:**
 
@@ -40,6 +63,8 @@ pytest tests/integration/
 pytest tests/e2e/
 
 **Generate coverage report (requires additionally pytest-cov):**
+
+(Optional) pip install pytest-cov
 
 pytest --cov=src
 
