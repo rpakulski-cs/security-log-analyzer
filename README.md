@@ -5,8 +5,8 @@ A Python CLI tool for analyzing security logs (Web Access & SSH/Auth). It detect
 ## Quick Start
 
 ### Prerequisites
-* Python 3.8+
-* Install dependencies: `pip install -r requirements.txt` (mainly `pydantic`, `pytest`)
+* Python 3.13.1+
+* Install dependencies: `pip install -e`)
 
 ### Running the Analyzer
 
