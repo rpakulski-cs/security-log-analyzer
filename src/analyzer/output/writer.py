@@ -30,6 +30,5 @@ class ConsoleWriter(ReportWriter):
 class JsonWriter(ReportWriter):
     def write(self, alerts: Iterator[Alert], destination: TextIO = sys.stdout):
         data = [alert.model_dump(mode='json') for alert in alerts]
-        
         json.dump(data, destination, indent=2, ensure_ascii=False)
         destination.write("\n")
