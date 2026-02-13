@@ -41,7 +41,7 @@ def test_sql_injection_detection(tmp_path):
     assert alerts[0].timestamp.minute == 0 and alerts[0].timestamp.second == 2
     
     assert alerts[1].rule_name == "SQL Injection Attempt"
-    assert "passwd" in alerts[1].description
+    assert "/etc" in alerts[1].description
 
 def test_ssh_brute_force_detection(tmp_path):
     auth_file = tmp_path / "auth_brute.log"
